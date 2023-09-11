@@ -1,6 +1,7 @@
 package com.avanade.rpg.mappers;
 
 import com.avanade.rpg.entities.Character;
+import com.avanade.rpg.enums.CharacterType;
 import com.avanade.rpg.payloads.requests.CharacterRequest;
 import com.avanade.rpg.payloads.responses.CharacterResponse;
 import org.springframework.stereotype.Component;
@@ -17,7 +18,7 @@ public class CharacterMapper {
         character.setAgility(request.agility());
         character.setNumDice(request.numDice());
         character.setFaces(request.faces());
-        character.setType(request.type());
+        character.setType(CharacterType.valueOf(request.type()));
         return character;
     }
 
