@@ -1,5 +1,6 @@
 package com.avanade.rpg.payloads.requests;
 
+import com.avanade.rpg.annotations.ValidateDiceFaces;
 import com.avanade.rpg.enums.CharacterType;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -11,7 +12,7 @@ public record CharacterRequest(@NotNull @Size(min = 1, max = 100) String name,
                                @NotNull Short defense,
                                @NotNull Short agility,
                                @NotNull @Positive Short numDice,
-                               @NotNull Short faces,
+                               @NotNull @ValidateDiceFaces Short faces,
                                @NotNull CharacterType type
 ) {
 }
