@@ -42,7 +42,7 @@ public class CharacterService {
         return mapper.toResponse(character);
     }
 
-    public CharacterResponse save(CharacterRequest request) {
+    public CharacterResponse create(CharacterRequest request) {
         ensureCharacterDoesNotExistByName(request.name());
         Character character = mapper.toEntity(request);
         saveOrThrowException(character);

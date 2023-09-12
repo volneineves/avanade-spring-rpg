@@ -138,7 +138,7 @@ class CharacterServiceTest {
         when(mapper.toEntity(heroRequest)).thenReturn(hero);
         when(mapper.toResponse(hero)).thenReturn(heroResponse);
 
-        CharacterResponse response = service.save(heroRequest);
+        CharacterResponse response = service.create(heroRequest);
 
         Assertions.assertNotNull(response);
 
@@ -152,7 +152,7 @@ class CharacterServiceTest {
     void shouldNotCreateHeroWhenNameExists() {
         when(repository.existsByName(heroRequest.name())).thenReturn(true);
 
-        assertThrows(ResourceAlreadyExistsException.class, () -> service.save(heroRequest));
+        assertThrows(ResourceAlreadyExistsException.class, () -> service.create(heroRequest));
 
         verify(repository).existsByName(heroRequest.name());
         verifyNoMoreInteractions(repository);
@@ -166,7 +166,7 @@ class CharacterServiceTest {
         when(mapper.toEntity(monsterRequest)).thenReturn(monster);
         when(mapper.toResponse(monster)).thenReturn(monsterResponse);
 
-        CharacterResponse monsterResponse = service.save(monsterRequest);
+        CharacterResponse monsterResponse = service.create(monsterRequest);
 
         Assertions.assertNotNull(monsterResponse);
         verify(repository).existsByName(monsterRequest.name());
@@ -183,7 +183,7 @@ class CharacterServiceTest {
         when(mapper.toEntity(heroRequest)).thenReturn(hero);
         doThrow(DataIntegrityViolationException.class).when(repository).save(any(Character.class));
 
-        assertThrows(ConstraintViolationException.class, () -> service.save(heroRequest));
+        assertThrows(ConstraintViolationException.class, () -> service.create(heroRequest));
     }
 
     @Test
@@ -195,7 +195,7 @@ class CharacterServiceTest {
         when(mapper.toEntity(heroRequest)).thenReturn(hero);
         doThrow(RuntimeException.class).when(repository).save(any(Character.class));
 
-        assertThrows(UnknownViolationException.class, () -> service.save(heroRequest));
+        assertThrows(UnknownViolationException.class, () -> service.create(heroRequest));
     }
 
     @Test

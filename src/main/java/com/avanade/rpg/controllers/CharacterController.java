@@ -34,7 +34,7 @@ public class CharacterController {
 
     @PostMapping
     public ResponseEntity<CharacterResponse> create(@RequestBody @Valid CharacterRequest request) {
-        CharacterResponse createdCharacter = characterService.save(request);
+        CharacterResponse createdCharacter = characterService.create(request);
         return ResponseEntity.status(201).body(createdCharacter);
     }
 
