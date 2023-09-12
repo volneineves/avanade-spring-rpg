@@ -199,6 +199,47 @@ class CharacterServiceTest {
     }
 
     @Test
+    @DisplayName("Should update character by ID")
+    void shouldUpdateCharacterById() {
+        UUID id = UUID.randomUUID();
+        hero.setName("testName");
+
+        when(repository.findById(id)).thenReturn(Optional.of(hero));
+        when(mapper.toEntity(id, heroRequest)).thenReturn(hero);
+        when(mapper.toResponse(hero)).thenReturn(heroResponse);
+
+        CharacterResponse response = service.update(id, heroRequest);
+
+        Assertions.assertNotNull(response);
+        verify(mapper).toEntity(id, heroRequest);
+        verify(repository).save(hero);
+        verify(mapper).toResponse(hero);
+    }
+
+    @Test
+    @DisplayName("Should throw ResourceNotFoundException if character to update does not exist")
+    void shouldThrowResourceNotFoundExceptionWhenUpdatingNonExistentCharacter() {
+        UUID id = UUID.randomUUID();
+
+        when(repository.findById(id)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> service.update(id, heroRequest));
+    }
+
+    @Test
+    @DisplayName("Should throw ResourceAlreadyExistsException if updated character name already exists")
+    void shouldThrowResourceAlreadyExistsExceptionWhenUpdatingToExistingName() {
+        UUID id = UUID.randomUUID();
+        Character oldCharacter = new Character();
+        oldCharacter.setName("OldHero");
+
+        when(repository.findById(id)).thenReturn(Optional.of(oldCharacter));
+        when(repository.existsByName(heroRequest.name())).thenReturn(true);
+
+        assertThrows(ResourceAlreadyExistsException.class, () -> service.update(id, heroRequest));
+    }
+
+    @Test
     @DisplayName("Should delete character by ID")
     void shouldDeleteCharacterById() {
         UUID id = UUID.randomUUID();
