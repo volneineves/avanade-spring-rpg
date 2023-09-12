@@ -6,12 +6,12 @@ import java.util.UUID;
 
 public record CharacterResponse(UUID id,
                                 String name,
-                                Short healthPoints,
+                                Short health,
                                 Short strength,
                                 Short defense,
                                 Short agility,
-                                Short diceQuantity,
-                                Short diceFaces,
+                                Short numDice,
+                                Short faces,
                                 CharacterType type
 ) {
 }
