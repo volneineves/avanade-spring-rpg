@@ -3,6 +3,7 @@ package com.avanade.rpg.services;
 import com.avanade.rpg.entities.Character;
 import com.avanade.rpg.exceptions.ConstraintViolationException;
 import com.avanade.rpg.exceptions.ResourceAlreadyExistsException;
+import com.avanade.rpg.exceptions.ResourceNotFoundException;
 import com.avanade.rpg.exceptions.UnknownViolationException;
 import com.avanade.rpg.mappers.CharacterMapper;
 import com.avanade.rpg.payloads.requests.CharacterRequest;
@@ -15,6 +16,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
+
+import static com.avanade.rpg.constants.ErrorMessages.CHARACTER_ALREADY_EXISTS;
+import static com.avanade.rpg.constants.ErrorMessages.CHARACTER_NOT_FOUND;
 
 @Service
 public class CharacterService {
@@ -47,14 +51,14 @@ public class CharacterService {
 
     private Character findCharacterByIdOrThrowError(UUID id) {
         LOGGER.info("Find character by ID: {}", id);
-        return repository.findById(id).orElseThrow(() -> new RuntimeException("Character not found"));
+        return repository.findById(id).orElseThrow(() -> new ResourceNotFoundException(CHARACTER_NOT_FOUND + id));
     }
 
     private void ensureCharacterDoesNotExistByName(String name) {
         LOGGER.info("Validating existence of character with name: {}", name);
         boolean existsByName = repository.existsByName(name);
         if (existsByName) {
-            throw new ResourceAlreadyExistsException("Character already exist with the name: " + name);
+            throw new ResourceAlreadyExistsException(CHARACTER_ALREADY_EXISTS + name);
         }
     }
 

@@ -14,4 +14,6 @@ public class ErrorMessages {
     public static final String FACES_MUST_BE_VALID = "Field must be a valid dice face value (4, 6, 8, 10, 12 or 20): ";
     public static final String TYPE_CANNOT_BE_NULL = "Field cannot be null: type";
     public static final String TYPE_MUST_BE_VALID = "Field type must ve valid: MONSTER | HERO";
+    public static final String CHARACTER_NOT_FOUND = "Character not found: ";
+    public static final String CHARACTER_ALREADY_EXISTS = "Character already exist: ";
 }
