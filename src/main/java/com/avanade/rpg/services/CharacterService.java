@@ -77,7 +77,7 @@ public class CharacterService {
 
     private void ensureCharacterDoesNotExistByName(String name) {
         LOGGER.info("Validating existence of character with name: {}", name);
-        boolean existsByName = repository.existsByName(name);
+        boolean existsByName = repository.existsByNameIgnoreCase(name);
         if (existsByName) {
             throw new ResourceAlreadyExistsException(CHARACTER_ALREADY_EXISTS + name);
         }

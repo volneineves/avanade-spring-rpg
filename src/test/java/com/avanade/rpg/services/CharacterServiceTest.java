@@ -134,7 +134,7 @@ class CharacterServiceTest {
     @Test
     @DisplayName("Should be able to create a new Hero")
     void shouldCreateHero() {
-        when(repository.existsByName(heroRequest.name())).thenReturn(false);
+        when(repository.existsByNameIgnoreCase(heroRequest.name())).thenReturn(false);
         when(mapper.toEntity(heroRequest)).thenReturn(hero);
         when(mapper.toResponse(hero)).thenReturn(heroResponse);
 
@@ -142,7 +142,7 @@ class CharacterServiceTest {
 
         Assertions.assertNotNull(response);
 
-        verify(repository).existsByName(heroRequest.name());
+        verify(repository).existsByNameIgnoreCase(heroRequest.name());
         verify(mapper).toEntity(heroRequest);
         verify(repository).save(hero);
     }
@@ -150,11 +150,11 @@ class CharacterServiceTest {
     @Test
     @DisplayName("Should not create a new Hero when name already exists")
     void shouldNotCreateHeroWhenNameExists() {
-        when(repository.existsByName(heroRequest.name())).thenReturn(true);
+        when(repository.existsByNameIgnoreCase(heroRequest.name())).thenReturn(true);
 
         assertThrows(ResourceAlreadyExistsException.class, () -> service.create(heroRequest));
 
-        verify(repository).existsByName(heroRequest.name());
+        verify(repository).existsByNameIgnoreCase(heroRequest.name());
         verifyNoMoreInteractions(repository);
         verifyNoInteractions(mapper);
     }
@@ -162,14 +162,14 @@ class CharacterServiceTest {
     @Test
     @DisplayName("Should be able to create a new Monster")
     void shouldCreateMonster() {
-        when(repository.existsByName(monsterRequest.name())).thenReturn(false);
+        when(repository.existsByNameIgnoreCase(monsterRequest.name())).thenReturn(false);
         when(mapper.toEntity(monsterRequest)).thenReturn(monster);
         when(mapper.toResponse(monster)).thenReturn(monsterResponse);
 
         CharacterResponse monsterResponse = service.create(monsterRequest);
 
         Assertions.assertNotNull(monsterResponse);
-        verify(repository).existsByName(monsterRequest.name());
+        verify(repository).existsByNameIgnoreCase(monsterRequest.name());
         verify(mapper).toEntity(monsterRequest);
         verify(repository).save(monster);
     }
@@ -179,7 +179,7 @@ class CharacterServiceTest {
     void shouldThrowConstraintViolationException() {
         Character hero = new Character();
 
-        when(repository.existsByName("Hero")).thenReturn(false);
+        when(repository.existsByNameIgnoreCase("Hero")).thenReturn(false);
         when(mapper.toEntity(heroRequest)).thenReturn(hero);
         doThrow(DataIntegrityViolationException.class).when(repository).save(any(Character.class));
 
@@ -191,7 +191,7 @@ class CharacterServiceTest {
     void shouldThrowUnknownViolationException() {
         Character hero = new Character();
 
-        when(repository.existsByName("Hero")).thenReturn(false);
+        when(repository.existsByNameIgnoreCase("Hero")).thenReturn(false);
         when(mapper.toEntity(heroRequest)).thenReturn(hero);
         doThrow(RuntimeException.class).when(repository).save(any(Character.class));
 
@@ -234,7 +234,7 @@ class CharacterServiceTest {
         oldCharacter.setName("OldHero");
 
         when(repository.findById(id)).thenReturn(Optional.of(oldCharacter));
-        when(repository.existsByName(heroRequest.name())).thenReturn(true);
+        when(repository.existsByNameIgnoreCase(heroRequest.name())).thenReturn(true);
 
         assertThrows(ResourceAlreadyExistsException.class, () -> service.update(id, heroRequest));
     }
