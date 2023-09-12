@@ -49,6 +49,11 @@ public class CharacterService {
         return mapper.toResponse(character);
     }
 
+    public void delete(UUID id) {
+        ensureCharacterExistsById(id);
+        deleteByIdOrThrowException(id);
+    }
+
     private Character findCharacterByIdOrThrowError(UUID id) {
         LOGGER.info("Find character by ID: {}", id);
         return repository.findById(id).orElseThrow(() -> new ResourceNotFoundException(CHARACTER_NOT_FOUND + id));
@@ -62,14 +67,32 @@ public class CharacterService {
         }
     }
 
+    private void ensureCharacterExistsById(UUID id) {
+        LOGGER.info("Validating existence of character with ID: {}", id);
+        boolean characterExists = repository.existsById(id);
+        if (!characterExists) {
+            throw new ResourceNotFoundException(CHARACTER_NOT_FOUND + id);
+        }
+    }
+
     private void saveOrThrowException(Character character) {
+        handleExceptions(() -> repository.save(character));
+        LOGGER.info("Successfully saved character with ID: {}", character.getId());
+    }
+
+    private void deleteByIdOrThrowException(UUID id) {
+        handleExceptions(() -> repository.deleteById(id));
+        LOGGER.info("Successfully deleted character with ID: {}", id);
+    }
+
+    private void handleExceptions(Runnable action) {
         try {
-            repository.save(character);
-            LOGGER.info("Successfully saved character with ID: {}", character.getId());
+            action.run();
         } catch (DataIntegrityViolationException e) {
             throw new ConstraintViolationException(e.getMessage());
-        }  catch (Exception e) {
+        } catch (Exception e) {
             throw new UnknownViolationException(e.getMessage());
         }
     }
+
 }
