@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.Assert.assertThrows;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,6 +44,8 @@ class CharacterServiceTest {
     private CharacterRequest monsterRequest;
     private Character hero;
     private Character monster;
+    private CharacterResponse heroResponse;
+    private CharacterResponse monsterResponse;
 
     @BeforeEach
     void setup() {
@@ -69,6 +71,25 @@ class CharacterServiceTest {
                 CharacterType.MONSTER.toString()
         );
 
+        heroResponse = new CharacterResponse(UUID.randomUUID(), "Hero",
+                (short) 10,
+                (short) 10,
+                (short) 10,
+                (short) 10,
+                (short) 10,
+                (short) 4,
+                CharacterType.HERO);
+
+        monsterResponse = new CharacterResponse(UUID.randomUUID(), "Monster",
+                (short) 10,
+                (short) 10,
+                (short) 10,
+                (short) 10,
+                (short) 10,
+                (short) 4,
+                CharacterType.MONSTER);
+
+
         hero = new Character();
         monster = new Character();
     }
@@ -76,9 +97,6 @@ class CharacterServiceTest {
     @Test
     @DisplayName("Should return all characters")
     void shouldReturnAllCharacters() {
-        CharacterResponse heroResponse = mapper.toResponse(hero);
-        CharacterResponse monsterResponse = mapper.toResponse(monster);
-
         when(repository.findAll()).thenReturn(Arrays.asList(hero, monster));
         when(mapper.toResponse(hero)).thenReturn(heroResponse);
         when(mapper.toResponse(monster)).thenReturn(monsterResponse);
@@ -93,13 +111,13 @@ class CharacterServiceTest {
     void shouldReturnCharacterById() {
         UUID id = UUID.randomUUID();
         Character hero = new Character();
-        CharacterResponse heroResponse = mapper.toResponse(hero);
 
         when(repository.findById(id)).thenReturn(Optional.of(hero));
         when(mapper.toResponse(hero)).thenReturn(heroResponse);
 
         CharacterResponse response = service.getById(id);
 
+        Assertions.assertNotNull(response);
         Assertions.assertEquals(heroResponse, response);
     }
 
@@ -118,8 +136,11 @@ class CharacterServiceTest {
     void shouldCreateHero() {
         when(repository.existsByName(heroRequest.name())).thenReturn(false);
         when(mapper.toEntity(heroRequest)).thenReturn(hero);
+        when(mapper.toResponse(hero)).thenReturn(heroResponse);
 
-        service.save(heroRequest);
+        CharacterResponse response = service.save(heroRequest);
+
+        Assertions.assertNotNull(response);
 
         verify(repository).existsByName(heroRequest.name());
         verify(mapper).toEntity(heroRequest);
@@ -143,9 +164,11 @@ class CharacterServiceTest {
     void shouldCreateMonster() {
         when(repository.existsByName(monsterRequest.name())).thenReturn(false);
         when(mapper.toEntity(monsterRequest)).thenReturn(monster);
+        when(mapper.toResponse(monster)).thenReturn(monsterResponse);
 
-        service.save(monsterRequest);
+        CharacterResponse monsterResponse = service.save(monsterRequest);
 
+        Assertions.assertNotNull(monsterResponse);
         verify(repository).existsByName(monsterRequest.name());
         verify(mapper).toEntity(monsterRequest);
         verify(repository).save(monster);
