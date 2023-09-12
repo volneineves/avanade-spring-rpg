@@ -7,7 +7,9 @@ import com.avanade.rpg.exceptions.ResourceAlreadyExistsException;
 import com.avanade.rpg.exceptions.UnknownViolationException;
 import com.avanade.rpg.mappers.CharacterMapper;
 import com.avanade.rpg.payloads.requests.CharacterRequest;
+import com.avanade.rpg.payloads.responses.CharacterResponse;
 import com.avanade.rpg.repositories.CharacterRepository;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,6 +18,11 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.*;
@@ -63,6 +70,46 @@ class CharacterServiceTest {
 
         hero = new Character();
         monster = new Character();
+    }
+
+    @Test
+    @DisplayName("Should return all characters")
+    void shouldReturnAllCharacters() {
+        CharacterResponse heroResponse = mapper.toResponse(hero);
+        CharacterResponse monsterResponse = mapper.toResponse(monster);
+
+        when(repository.findAll()).thenReturn(Arrays.asList(hero, monster));
+        when(mapper.toResponse(hero)).thenReturn(heroResponse);
+        when(mapper.toResponse(monster)).thenReturn(monsterResponse);
+
+        List<CharacterResponse> responses = service.getAll();
+
+        Assertions.assertEquals(2, responses.size());
+    }
+
+    @Test
+    @DisplayName("Should return character by ID")
+    void shouldReturnCharacterById() {
+        UUID id = UUID.randomUUID();
+        Character hero = new Character();
+        CharacterResponse heroResponse = mapper.toResponse(hero);
+
+        when(repository.findById(id)).thenReturn(Optional.of(hero));
+        when(mapper.toResponse(hero)).thenReturn(heroResponse);
+
+        CharacterResponse response = service.getById(id);
+
+        Assertions.assertEquals(heroResponse, response);
+    }
+
+    @Test
+    @DisplayName("Should throw exception if character not found by ID")
+    void shouldThrowExceptionIfCharacterNotFoundById() {
+        UUID id = UUID.randomUUID();
+
+        when(repository.findById(id)).thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class, () -> service.getById(id));
     }
 
     @Test
