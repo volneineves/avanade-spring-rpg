@@ -4,6 +4,7 @@ import com.avanade.rpg.entities.Character;
 import com.avanade.rpg.enums.CharacterType;
 import com.avanade.rpg.exceptions.ConstraintViolationException;
 import com.avanade.rpg.exceptions.ResourceAlreadyExistsException;
+import com.avanade.rpg.exceptions.ResourceNotFoundException;
 import com.avanade.rpg.exceptions.UnknownViolationException;
 import com.avanade.rpg.mappers.CharacterMapper;
 import com.avanade.rpg.payloads.requests.CharacterRequest;
@@ -172,5 +173,25 @@ class CharacterServiceTest {
         doThrow(RuntimeException.class).when(repository).save(any(Character.class));
 
         assertThrows(UnknownViolationException.class, () -> service.save(heroRequest));
+    }
+
+    @Test
+    @DisplayName("Should delete character by ID")
+    void shouldDeleteCharacterById() {
+        UUID id = UUID.randomUUID();
+        when(repository.existsById(id)).thenReturn(true);
+
+        service.delete(id);
+
+        verify(repository).deleteById(id);
+    }
+
+    @Test
+    @DisplayName("Should throw ResourceNotFoundException if character does not exist")
+    void shouldThrowResourceNotFoundException() {
+        UUID id = UUID.randomUUID();
+        when(repository.existsById(id)).thenReturn(false);
+
+        assertThrows(ResourceNotFoundException.class, () -> service.delete(id));
     }
 }
