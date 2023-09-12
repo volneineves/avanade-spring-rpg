@@ -38,6 +38,12 @@ public class CharacterController {
         return ResponseEntity.status(201).body(createdCharacter);
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<CharacterResponse> update(@PathVariable UUID id, @RequestBody CharacterRequest updatedCharacter) {
+        CharacterResponse updated = characterService.update(id, updatedCharacter);
+        return ResponseEntity.ok(updated);
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         characterService.delete(id);

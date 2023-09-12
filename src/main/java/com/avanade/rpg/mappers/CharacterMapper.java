@@ -6,6 +6,8 @@ import com.avanade.rpg.payloads.requests.CharacterRequest;
 import com.avanade.rpg.payloads.responses.CharacterResponse;
 import org.springframework.stereotype.Component;
 
+import java.util.UUID;
+
 @Component
 public class CharacterMapper {
 
@@ -19,6 +21,12 @@ public class CharacterMapper {
         character.setNumDice(request.numDice());
         character.setFaces(request.faces());
         character.setType(CharacterType.valueOf(request.type()));
+        return character;
+    }
+
+    public Character toEntity(UUID id, CharacterRequest request) {
+        Character character = toEntity(request);
+        character.setId(id);
         return character;
     }
 

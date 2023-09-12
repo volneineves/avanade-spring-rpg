@@ -15,6 +15,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import static com.avanade.rpg.constants.ErrorMessages.CHARACTER_ALREADY_EXISTS;
@@ -49,6 +50,14 @@ public class CharacterService {
         return mapper.toResponse(character);
     }
 
+    public CharacterResponse update(UUID id, CharacterRequest newCharacterRequest) {
+        Character oldCharacter = findCharacterByIdOrThrowError(id);
+        ensureNewCharacterNameIsValid(newCharacterRequest, oldCharacter);
+        Character character = mapper.toEntity(id, newCharacterRequest);
+        saveOrThrowException(character);
+        return mapper.toResponse(character);
+    }
+
     public void delete(UUID id) {
         ensureCharacterExistsById(id);
         deleteByIdOrThrowException(id);
@@ -57,6 +66,13 @@ public class CharacterService {
     private Character findCharacterByIdOrThrowError(UUID id) {
         LOGGER.info("Find character by ID: {}", id);
         return repository.findById(id).orElseThrow(() -> new ResourceNotFoundException(CHARACTER_NOT_FOUND + id));
+    }
+
+    private void ensureNewCharacterNameIsValid(CharacterRequest newCharacter, Character oldCharacter) {
+        boolean namesArentEquals = !Objects.equals(oldCharacter.getName(), newCharacter.name());
+        if (namesArentEquals) {
+            ensureCharacterDoesNotExistByName(newCharacter.name());
+        }
     }
 
     private void ensureCharacterDoesNotExistByName(String name) {
