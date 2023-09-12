@@ -5,10 +5,10 @@ import com.avanade.rpg.payloads.responses.CharacterResponse;
 import com.avanade.rpg.services.CharacterService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/characters")
@@ -18,6 +18,18 @@ public class CharacterController {
 
     public CharacterController(CharacterService characterService) {
         this.characterService = characterService;
+    }
+
+    @GetMapping
+    public ResponseEntity<List<CharacterResponse>> getAll() {
+        List<CharacterResponse> characters = characterService.getAll();
+        return ResponseEntity.ok(characters);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<CharacterResponse> getById(@PathVariable UUID id) {
+        CharacterResponse character = characterService.getById(id);
+        return ResponseEntity.ok(character);
     }
 
     @PostMapping
