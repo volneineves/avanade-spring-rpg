@@ -10,6 +10,7 @@ import com.avanade.rpg.exceptions.UnknownViolationException;
 import com.avanade.rpg.mappers.BattleMapper;
 import com.avanade.rpg.payloads.requests.BattleRequest;
 import com.avanade.rpg.payloads.responses.BattleResponse;
+import com.avanade.rpg.payloads.responses.CharacterResponse;
 import com.avanade.rpg.repositories.BattleRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -20,10 +21,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static com.avanade.rpg.enums.CharacterType.HERO;
+import static com.avanade.rpg.enums.CharacterType.MONSTER;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
@@ -50,6 +54,8 @@ class BattleServiceTest {
     private Character monster;
     private Battle battle;
     private BattleResponse response;
+    private CharacterResponse heroResponse;
+    private CharacterResponse monsterResponse;
 
     @BeforeEach
     void setUp() {
@@ -59,9 +65,38 @@ class BattleServiceTest {
         request = new BattleRequest(heroId, monsterId);
 
         hero = new Character();
+        hero.setType(CharacterType.HERO);
+
         monster = new Character();
+        monster.setType(CharacterType.MONSTER);
+
         battle = new Battle();
         response = mock(BattleResponse.class);
+        heroResponse = mock(CharacterResponse.class);
+        monsterResponse = mock(CharacterResponse.class);
+    }
+
+    @Test
+    @DisplayName("Should create a battle Assigns Initiative and Opponent")
+    void shouldCreateBattleAssignsInitiativeAndOpponent() {
+        hero.setType(HERO);
+        monster.setType(MONSTER);
+
+        BattleResponse battleResponse = new BattleResponse(battleId, heroResponse, monsterResponse, new ArrayList<>(), null);
+
+        when(characterService.findCharacterByIdOrThrowError(heroId)).thenReturn(hero);
+        when(characterService.findCharacterByIdOrThrowError(monsterId)).thenReturn(monster);
+        when(mapper.toEntity(any(Character.class), any(Character.class))).thenReturn(battle);
+        when(mapper.toResponse(battle)).thenReturn(battleResponse);
+
+        BattleResponse actualResponse = service.create(request);
+
+        assertNotNull(actualResponse);
+        assertNotNull(actualResponse.initiative());
+        assertNotNull(actualResponse.opponent());
+
+        verify(characterService, times(1)).findCharacterByIdOrThrowError(heroId);
+        verify(characterService, times(1)).findCharacterByIdOrThrowError(monsterId);
     }
 
     @Test
@@ -104,28 +139,11 @@ class BattleServiceTest {
         assertThrows(ResourceNotFoundException.class, () -> service.getById(battleId));
     }
 
-
-    @Test
-    @DisplayName("Should create a new battle")
-    void shouldCreateNewBattle() {
-        hero.setType(CharacterType.HERO);
-        monster.setType(CharacterType.MONSTER);
-
-        when(characterService.findCharacterByIdOrThrowError(heroId)).thenReturn(hero);
-        when(characterService.findCharacterByIdOrThrowError(monsterId)).thenReturn(monster);
-        when(mapper.toEntity(any(Character.class), any(Character.class))).thenReturn(battle);
-        when(mapper.toResponse(battle)).thenReturn(response);
-
-        BattleResponse actualResponse = service.create(request);
-
-        assertNotNull(actualResponse);
-    }
-
     @Test
     @DisplayName("Should throw BadRequestException if character type is not of type Character")
     void shouldThrowBadRequestExceptionForInvalidCharacter() {
-        hero.setType(CharacterType.HERO);
-        monster.setType(CharacterType.HERO);
+        hero.setType(HERO);
+        monster.setType(HERO);
 
         when(characterService.findCharacterByIdOrThrowError(heroId)).thenReturn(hero);
         when(characterService.findCharacterByIdOrThrowError(monsterId)).thenReturn(monster);
@@ -136,8 +154,8 @@ class BattleServiceTest {
     @Test
     @DisplayName("Should throw ConstraintViolationException when DataIntegrityViolationException is caught")
     void shouldThrowConstraintViolationException() {
-        hero.setType(CharacterType.HERO);
-        monster.setType(CharacterType.MONSTER);
+        hero.setType(HERO);
+        monster.setType(MONSTER);
 
         when(characterService.findCharacterByIdOrThrowError(heroId)).thenReturn(hero);
         when(characterService.findCharacterByIdOrThrowError(monsterId)).thenReturn(monster);
@@ -150,8 +168,8 @@ class BattleServiceTest {
     @Test
     @DisplayName("Should throw UnknownViolationException for unhandled exceptions")
     void shouldThrowUnknownViolationException() {
-        hero.setType(CharacterType.HERO);
-        monster.setType(CharacterType.MONSTER);
+        hero.setType(HERO);
+        monster.setType(MONSTER);
 
         when(characterService.findCharacterByIdOrThrowError(heroId)).thenReturn(hero);
         when(characterService.findCharacterByIdOrThrowError(monsterId)).thenReturn(monster);
