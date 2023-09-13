@@ -6,6 +6,7 @@ import com.avanade.rpg.enums.CharacterType;
 import com.avanade.rpg.enums.DiceFaces;
 import com.avanade.rpg.exceptions.BadRequestException;
 import com.avanade.rpg.exceptions.ConstraintViolationException;
+import com.avanade.rpg.exceptions.ResourceNotFoundException;
 import com.avanade.rpg.exceptions.UnknownViolationException;
 import com.avanade.rpg.mappers.BattleMapper;
 import com.avanade.rpg.payloads.requests.BattleRequest;
@@ -16,8 +17,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 
+import static com.avanade.rpg.constants.ErrorMessages.*;
 import static com.avanade.rpg.enums.CharacterType.HERO;
 import static com.avanade.rpg.enums.CharacterType.MONSTER;
 import static com.avanade.rpg.enums.DiceFaces.D20;
@@ -36,6 +40,16 @@ public class BattleService {
         this.repository = repository;
         this.mapper = mapper;
         this.characterService = characterService;
+    }
+
+    public List<BattleResponse> getAll() {
+        List<Battle> battles = repository.findAll();
+        return battles.stream().map(mapper::toResponse).toList();
+    }
+
+    public BattleResponse getById(UUID id) {
+        Battle battle = findBattleByIdOrThrowError(id);
+        return mapper.toResponse(battle);
     }
 
     public BattleResponse create(BattleRequest request) {
@@ -61,7 +75,7 @@ public class BattleService {
         boolean isNotCorrectType = !character.getType().equals(expectedType);
 
         if (isNotCorrectType) {
-            throw new BadRequestException("Character is different than expected type: " + expectedType);
+            throw new BadRequestException(CHARACTER_IS_DIFFERENT + expectedType);
         }
     }
 
@@ -77,6 +91,11 @@ public class BattleService {
 
     private int rollDice(DiceFaces diceFaces) {
         return RANDOM.nextInt(diceFaces.getFaces()) + 1;
+    }
+
+    private Battle findBattleByIdOrThrowError(UUID id) {
+        LOGGER.info("Find battle by ID: {}", id);
+        return repository.findById(id).orElseThrow(() -> new ResourceNotFoundException(BATTLE_NOT_FOUND + id));
     }
 
     private void saveOrThrowException(Battle battle) {
