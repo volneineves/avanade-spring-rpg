@@ -5,6 +5,7 @@ import com.avanade.rpg.entities.Character;
 import com.avanade.rpg.enums.CharacterType;
 import com.avanade.rpg.exceptions.BadRequestException;
 import com.avanade.rpg.exceptions.ConstraintViolationException;
+import com.avanade.rpg.exceptions.ResourceNotFoundException;
 import com.avanade.rpg.exceptions.UnknownViolationException;
 import com.avanade.rpg.mappers.BattleMapper;
 import com.avanade.rpg.payloads.requests.BattleRequest;
@@ -19,10 +20,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -42,6 +44,7 @@ class BattleServiceTest {
 
     private UUID heroId;
     private UUID monsterId;
+    private UUID battleId;
     private BattleRequest request;
     private Character hero;
     private Character monster;
@@ -52,6 +55,7 @@ class BattleServiceTest {
     void setUp() {
         heroId = UUID.randomUUID();
         monsterId = UUID.randomUUID();
+        battleId = UUID.randomUUID();
         request = new BattleRequest(heroId, monsterId);
 
         hero = new Character();
@@ -59,6 +63,47 @@ class BattleServiceTest {
         battle = new Battle();
         response = mock(BattleResponse.class);
     }
+
+    @Test
+    @DisplayName("Should return a list of all battles")
+    void shouldReturnAllBattles() {
+
+        BattleResponse response2 = mock(BattleResponse.class);
+        Battle battle2 = new Battle();
+        List<Battle> battleList = List.of(battle, battle2);
+        List<BattleResponse> expectedResponseList = List.of(response, response2);
+
+        when(repository.findAll()).thenReturn(battleList);
+        when(mapper.toResponse(battle)).thenReturn(response);
+        when(mapper.toResponse(battle2)).thenReturn(response2);
+
+        List<BattleResponse> actualResponseList = service.getAll();
+
+        assertEquals(expectedResponseList, actualResponseList);
+    }
+
+    @Test
+    @DisplayName("Should get Battle by ID")
+    void shouldGetBattleById() {
+
+        when(repository.findById(battleId)).thenReturn(Optional.of(battle));
+        when(mapper.toResponse(battle)).thenReturn(response);
+
+        BattleResponse battleResponse = service.getById(battleId);
+
+        assertNotNull(battleResponse);
+    }
+
+    @Test
+    @DisplayName("Should throw ResourceNotFoundException when getting a Battle by ID that does not exist")
+    void shouldThrowResourceNotFoundExceptionWhenBattleNotFoundById() {
+        UUID battleId = UUID.randomUUID();
+
+        when(repository.findById(battleId)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> service.getById(battleId));
+    }
+
 
     @Test
     @DisplayName("Should create a new battle")
