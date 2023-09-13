@@ -1,9 +1,6 @@
 package com.avanade.rpg.handlers;
 
-import com.avanade.rpg.exceptions.ConstraintViolationException;
-import com.avanade.rpg.exceptions.ResourceAlreadyExistsException;
-import com.avanade.rpg.exceptions.ResourceNotFoundException;
-import com.avanade.rpg.exceptions.UnknownViolationException;
+import com.avanade.rpg.exceptions.*;
 import com.avanade.rpg.payloads.responses.StandardErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +21,10 @@ public class CustomExceptionHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CustomExceptionHandler.class);
 
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<StandardErrorResponse> handleBadRequestException(BadRequestException ex) {
+        return buildErrorResponse(ex, HttpStatus.BAD_REQUEST);
+    }
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<StandardErrorResponse> handleResourceNotFound(ResourceNotFoundException ex) {
         return buildErrorResponse(ex, HttpStatus.NOT_FOUND);
