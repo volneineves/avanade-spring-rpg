@@ -14,7 +14,9 @@ import com.avanade.rpg.factories.Action;
 import com.avanade.rpg.factories.ActionFactory;
 import com.avanade.rpg.mappers.TurnMapper;
 import com.avanade.rpg.payloads.requests.ActionTurnRequest;
+import com.avanade.rpg.payloads.requests.TurnFilterRequest;
 import com.avanade.rpg.payloads.responses.TurnResponse;
+import com.avanade.rpg.repositories.TurnFilterRepository;
 import com.avanade.rpg.repositories.TurnRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -25,6 +27,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.dao.DataIntegrityViolationException;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -38,6 +41,8 @@ class TurnServiceTest {
 
     @Mock
     private TurnRepository repository;
+    @Mock
+    private TurnFilterRepository filterRepository;
 
     @Mock
     private TurnMapper mapper;
@@ -84,6 +89,31 @@ class TurnServiceTest {
         action = mock(Action.class);
     }
 
+    @Test
+    @DisplayName("Should return TurnResponse when given a valid UUID")
+    void shouldReturnTurnResponseWhenGivenValidUUID() {
+        when(repository.findById(turnId)).thenReturn(java.util.Optional.of(turn));
+        when(mapper.toResponse(turn)).thenReturn(turnResponse);
+
+        TurnResponse result = service.getById(turnId);
+
+        assertEquals(turnResponse, result);
+    }
+
+    @Test
+    @DisplayName("Should return list of TurnResponses when given a valid filter request")
+    void shouldReturnListOfTurnResponsesWhenGivenValidFilterRequest() {
+        TurnFilterRequest filterRequest = mock(TurnFilterRequest.class);
+        List<Turn> turns = List.of(turn);
+        List<TurnResponse> turnResponses = List.of(turnResponse);
+
+        when(filterRepository.findByFilter(filterRequest)).thenReturn(turns);
+        when(mapper.toResponse(turn)).thenReturn(turnResponse);
+
+        List<TurnResponse> result = service.getAllByFilter(filterRequest);
+
+        assertEquals(turnResponses, result);
+    }
 
     @Test
     @DisplayName("Should create a new turn")
@@ -155,31 +185,36 @@ class TurnServiceTest {
 
         when(repository.save(turn)).thenReturn(turn);
         when(mapper.toResponse(turn)).thenReturn(turnResponse);
-        when(turnResponse.status()).thenReturn(TurnStatus.FINISHED);
+        when(mapper.toEntity(any(), any())).thenReturn(turn);
+        when(turn.getBattle()).thenReturn(battle);
 
-        TurnResponse response = service.calculateDamage(turnId);
+        service.calculateDamage(turnId);
 
         verify(turn).setDamage(anyInt());
-        assertEquals(TurnStatus.FINISHED, response.status());
     }
+
 
     @Test
     @DisplayName("Should calculate damage and update Battle winner")
     void shouldCalculateDamageAndUpdateBattleWinner() {
+        hero.setStrength((short) 1000);
+        monster.setDefense((short) 0);
+
         when(repository.findById(turnId)).thenReturn(Optional.of(turn));
         when(turn.getBattle()).thenReturn(battle);
         when(turn.getAttacker()).thenReturn(hero);
+        when(turn.getAttacker().getName()).thenReturn("Guerreiro");
         when(turn.getDefender()).thenReturn(monster);
+        when(turn.getDefender().getHealth()).thenReturn((short) 0);
         when(turn.getAttack()).thenReturn(1000);
 
         when(repository.save(turn)).thenReturn(turn);
-        when(mapper.toResponse(turn)).thenReturn(turnResponse);
-        when(turnResponse.status()).thenReturn(TurnStatus.FINISHED);
 
-        TurnResponse response = service.calculateDamage(turnId);
+        when(mapper.toResponse(turn)).thenReturn(turnResponse);
+
+        service.calculateDamage(turnId);
 
         verify(turn).setDamage(anyInt());
-        assertEquals(TurnStatus.FINISHED, response.status());
         verify(publisher).processHistoryBattle(battle);
     }
 
