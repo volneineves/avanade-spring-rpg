@@ -1,5 +1,8 @@
 package com.avanade.rpg.entities;
 
+import com.avanade.rpg.enums.TurnStatus;
+import com.avanade.rpg.exceptions.BadRequestException;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
@@ -15,22 +18,26 @@ public class Battle {
     private UUID id;
 
 
-    @ManyToOne(cascade = CascadeType.PERSIST, optional = false)
+    @ManyToOne(optional = false)
     @JoinColumn(name = "initiative_id")
     private Character initiative;
 
-    @ManyToOne(cascade = CascadeType.PERSIST, optional = false)
+    @ManyToOne(optional = false)
     @JoinColumn(name = "opponent_id")
     private Character opponent;
 
-    @OneToMany(cascade = CascadeType.ALL)
-    @JoinColumn(name = "battle_id")
+    @OneToMany(mappedBy = "battle")
+    @JsonManagedReference
     private List<Turn> turns = new ArrayList<>();
 
     private String winner;
 
     public UUID getId() {
         return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
     }
 
     public Character getInitiative() {
@@ -53,19 +60,22 @@ public class Battle {
         return turns;
     }
 
-    public void addTurn(Turn turn) {
-        this.turns.add(turn);
-    }
-
-    public void setTurns(List<Turn> turns) {
-        this.turns = turns;
-    }
-
     public String getWinner() {
         return winner;
     }
 
     public void setWinner(String winner) {
         this.winner = winner;
+    }
+
+    public Integer getNextTurnNumber() {
+        return this.turns.size() + 1;
+    }
+
+    public void validateCanAddNewTurn() {
+        boolean hasTurnsWhoDoesNotFinishedYet =  this.turns.stream().anyMatch(turn -> !TurnStatus.FINISHED.equals(turn.getStatus()));
+        if (hasTurnsWhoDoesNotFinishedYet) {
+            throw new BadRequestException("Battle has already turn running");
+        }
     }
 }

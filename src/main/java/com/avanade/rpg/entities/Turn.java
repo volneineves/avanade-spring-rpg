@@ -1,6 +1,8 @@
 package com.avanade.rpg.entities;
 
 
+import com.avanade.rpg.enums.TurnStatus;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 
 import java.util.UUID;
@@ -13,9 +15,29 @@ public class Turn {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
-    private short attackValue;
-    private short defenseValue;
-    private short damage;
+    private Integer attack;
+    private Integer defense;
+
+    private Integer damage;
+
+    @Column(nullable = false)
+    private Integer numTurn;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TurnStatus status;
+
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "attacker_id")
+    private Character attacker;
+
+    @JoinColumn(name = "defender_id")
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    private Character defender;
+
+    @ManyToOne(cascade = CascadeType.PERSIST)
+    @JsonBackReference
+    private Battle battle;
 
     public UUID getId() {
         return id;
@@ -25,27 +47,67 @@ public class Turn {
         this.id = id;
     }
 
-    public short getAttackValue() {
-        return attackValue;
+    public Integer getAttack() {
+        return attack;
     }
 
-    public void setAttackValue(short attackValue) {
-        this.attackValue = attackValue;
+    public void setAttack(Integer attackValue) {
+        this.attack = attackValue;
     }
 
-    public short getDefenseValue() {
-        return defenseValue;
+    public Integer getDefense() {
+        return defense;
     }
 
-    public void setDefenseValue(short defenseValue) {
-        this.defenseValue = defenseValue;
+    public void setDefense(Integer defenseValue) {
+        this.defense = defenseValue;
     }
 
-    public short getDamage() {
+    public Integer getDamage() {
         return damage;
     }
 
-    public void setDamage(short damage) {
+    public void setDamage(Integer damage) {
         this.damage = damage;
+    }
+
+    public Integer getNumTurn() {
+        return numTurn;
+    }
+
+    public void setNumTurn(Integer numTurn) {
+        this.numTurn = numTurn;
+    }
+
+    public TurnStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(TurnStatus status) {
+        this.status = status;
+    }
+
+    public Character getAttacker() {
+        return attacker;
+    }
+
+    public void setAttacker(Character attacker) {
+        this.attacker = attacker;
+    }
+
+    public Character getDefender() {
+        return defender;
+    }
+
+    public void setDefender(Character defender) {
+        this.defender = defender;
+    }
+
+    public Battle getBattle() {
+        return battle;
+    }
+
+    public void setBattle(Battle battle) {
+        this.battle = battle;
     }
 }
