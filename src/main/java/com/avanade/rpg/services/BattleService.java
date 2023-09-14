@@ -3,7 +3,6 @@ package com.avanade.rpg.services;
 import com.avanade.rpg.entities.Battle;
 import com.avanade.rpg.entities.Character;
 import com.avanade.rpg.enums.CharacterType;
-import com.avanade.rpg.enums.DiceFaces;
 import com.avanade.rpg.exceptions.BadRequestException;
 import com.avanade.rpg.exceptions.ConstraintViolationException;
 import com.avanade.rpg.exceptions.ResourceNotFoundException;
@@ -18,20 +17,19 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Random;
 import java.util.UUID;
 
-import static com.avanade.rpg.constants.ErrorMessages.*;
+import static com.avanade.rpg.constants.ErrorMessages.BATTLE_NOT_FOUND;
+import static com.avanade.rpg.constants.ErrorMessages.CHARACTER_IS_DIFFERENT;
 import static com.avanade.rpg.enums.CharacterType.HERO;
 import static com.avanade.rpg.enums.CharacterType.MONSTER;
 import static com.avanade.rpg.enums.DiceFaces.D20;
+import static com.avanade.rpg.util.DiceUtil.rollDice;
 
 @Service
 public class BattleService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BattleService.class);
-    private static final Random RANDOM = new Random();
-
     private final BattleRepository repository;
     private final BattleMapper mapper;
     private final CharacterService characterService;
@@ -89,11 +87,7 @@ public class BattleService {
         return heroInitiative > monsterInitiative ? hero : monster;
     }
 
-    private int rollDice(DiceFaces diceFaces) {
-        return RANDOM.nextInt(diceFaces.getFaces()) + 1;
-    }
-
-    private Battle findBattleByIdOrThrowError(UUID id) {
+    public Battle findBattleByIdOrThrowError(UUID id) {
         LOGGER.info("Find battle by ID: {}", id);
         return repository.findById(id).orElseThrow(() -> new ResourceNotFoundException(BATTLE_NOT_FOUND + id));
     }
