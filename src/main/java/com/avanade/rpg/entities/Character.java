@@ -1,6 +1,7 @@
 package com.avanade.rpg.entities;
 
 import com.avanade.rpg.enums.CharacterType;
+import com.avanade.rpg.enums.DiceFaces;
 import jakarta.persistence.*;
 
 import java.util.UUID;
@@ -35,8 +36,9 @@ public class Character {
     @Column(nullable = false)
     private short numDice;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private short faces;
+    private DiceFaces faces;
 
     public UUID getId() {
         return id;
@@ -102,11 +104,11 @@ public class Character {
         this.numDice = numDice;
     }
 
-    public short getFaces() {
+    public DiceFaces getFaces() {
         return faces;
     }
 
-    public void setFaces(short faces) {
+    public void setFaces(DiceFaces faces) {
         this.faces = faces;
     }
 }

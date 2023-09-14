@@ -1,15 +1,13 @@
 package com.avanade.rpg.handlers;
 
-import com.avanade.rpg.exceptions.ConstraintViolationException;
-import com.avanade.rpg.exceptions.ResourceAlreadyExistsException;
-import com.avanade.rpg.exceptions.ResourceNotFoundException;
-import com.avanade.rpg.exceptions.UnknownViolationException;
+import com.avanade.rpg.exceptions.*;
 import com.avanade.rpg.payloads.responses.StandardErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -24,6 +22,10 @@ public class CustomExceptionHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CustomExceptionHandler.class);
 
+    @ExceptionHandler(BadRequestException.class)
+    public ResponseEntity<StandardErrorResponse> handleBadRequestException(BadRequestException ex) {
+        return buildErrorResponse(ex, HttpStatus.BAD_REQUEST);
+    }
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<StandardErrorResponse> handleResourceNotFound(ResourceNotFoundException ex) {
         return buildErrorResponse(ex, HttpStatus.NOT_FOUND);
@@ -60,6 +62,11 @@ public class CustomExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<StandardErrorResponse> handleUnreadableMessage(HttpMessageNotReadableException ex) {
+        return buildErrorResponse(ex, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(HttpMessageNotWritableException.class)
+    public ResponseEntity<StandardErrorResponse> handleUnreadableMessage(HttpMessageNotWritableException ex) {
         return buildErrorResponse(ex, HttpStatus.BAD_REQUEST);
     }
 

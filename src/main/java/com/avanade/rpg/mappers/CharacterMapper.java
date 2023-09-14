@@ -2,6 +2,7 @@ package com.avanade.rpg.mappers;
 
 import com.avanade.rpg.entities.Character;
 import com.avanade.rpg.enums.CharacterType;
+import com.avanade.rpg.enums.DiceFaces;
 import com.avanade.rpg.payloads.requests.CharacterRequest;
 import com.avanade.rpg.payloads.responses.CharacterResponse;
 import org.springframework.stereotype.Component;
@@ -19,7 +20,7 @@ public class CharacterMapper {
         character.setDefense(request.defense());
         character.setAgility(request.agility());
         character.setNumDice(request.numDice());
-        character.setFaces(request.faces());
+        character.setFaces(DiceFaces.valueOf(request.faces()));
         character.setType(CharacterType.valueOf(request.type()));
         return character;
     }
@@ -39,7 +40,7 @@ public class CharacterMapper {
                 character.getDefense(),
                 character.getAgility(),
                 character.getNumDice(),
-                character.getFaces(),
+                character.getFaces().getFaces(),
                 character.getType()
         );
     }

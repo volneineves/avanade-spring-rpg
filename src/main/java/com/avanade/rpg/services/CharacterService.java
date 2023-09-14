@@ -63,7 +63,7 @@ public class CharacterService {
         deleteByIdOrThrowException(id);
     }
 
-    private Character findCharacterByIdOrThrowError(UUID id) {
+    public Character findCharacterByIdOrThrowError(UUID id) {
         LOGGER.info("Find character by ID: {}", id);
         return repository.findById(id).orElseThrow(() -> new ResourceNotFoundException(CHARACTER_NOT_FOUND + id));
     }
