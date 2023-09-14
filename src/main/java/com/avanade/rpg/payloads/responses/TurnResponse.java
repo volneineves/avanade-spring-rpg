@@ -1,18 +1,27 @@
 package com.avanade.rpg.payloads.responses;
 
+import com.avanade.rpg.enums.TurnStatus;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.UUID;
 
 public record TurnResponse(
         @JsonProperty("id")
         UUID id,
 
+        @JsonProperty("numero_do_turno")
+        Integer numTurn,
+
         @JsonProperty("valor_do_ataque")
-        short attackValue,
+        Integer attack,
 
         @JsonProperty("valor_da_defesa")
-        short defenseValue,
+        Integer defense,
 
         @JsonProperty("dano")
-        short damage) {
+        Integer damage,
+
+        @JsonProperty("status")
+        TurnStatus status
+) {
 }
