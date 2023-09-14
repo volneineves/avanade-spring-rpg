@@ -14,13 +14,17 @@ import com.avanade.rpg.factories.Action;
 import com.avanade.rpg.factories.ActionFactory;
 import com.avanade.rpg.mappers.TurnMapper;
 import com.avanade.rpg.payloads.requests.ActionTurnRequest;
+import com.avanade.rpg.payloads.requests.TurnFilterRequest;
+import com.avanade.rpg.payloads.responses.DamageCalculationResponse;
 import com.avanade.rpg.payloads.responses.TurnResponse;
+import com.avanade.rpg.repositories.TurnFilterRepository;
 import com.avanade.rpg.repositories.TurnRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 import static com.avanade.rpg.constants.ErrorMessages.*;
@@ -30,23 +34,37 @@ import static com.avanade.rpg.util.DiceUtil.rollDice;
 @Service
 public class TurnService {
 
+    private String winner = null;
     private static final Logger LOGGER = LoggerFactory.getLogger(TurnService.class);
     private final TurnRepository repository;
+    private final TurnFilterRepository filterRepository;
     private final TurnMapper mapper;
     private final ActionFactory actionFactory;
     private final HistoryPublisher publisher;
 
-    public TurnService(TurnRepository repository, TurnMapper mapper, ActionFactory actionFactory, HistoryPublisher publisher) {
+    public TurnService(TurnRepository repository, TurnFilterRepository filterRepository, TurnMapper mapper, ActionFactory actionFactory, HistoryPublisher publisher) {
         this.repository = repository;
+        this.filterRepository = filterRepository;
         this.mapper = mapper;
         this.actionFactory = actionFactory;
         this.publisher = publisher;
     }
 
+    public TurnResponse getById(UUID id) {
+        Turn turn = findTurnByIdOrThrowError(id);
+        return mapper.toResponse(turn);
+    }
+
+    public List<TurnResponse> getAllByFilter(TurnFilterRequest filterRequest) {
+        List<Turn> turns = filterRepository.findByFilter(filterRequest);
+        return turns.stream().map(mapper::toResponse).toList();
+    }
+
     public Turn createByBattle(Battle battle) {
         validateTurnCreation(battle);
         Turn newTurn = initializeTurn(battle);
-        return saveTurn(newTurn);
+        saveOrThrowException(newTurn);
+        return newTurn;
     }
 
     public TurnResponse updateByAction(ActionTurnRequest request) {
@@ -54,15 +72,30 @@ public class TurnService {
         Character actingCharacter = getActingCharacter(existingTurn, request.characterId());
 
         performActionAndUpdateStatus(existingTurn, actingCharacter, request.action());
-
-        return mapper.toResponse(saveTurn(existingTurn));
+        saveOrThrowException(existingTurn);
+        return mapper.toResponse(existingTurn);
     }
 
-    public TurnResponse calculateDamage(UUID turnId) {
+    public DamageCalculationResponse calculateDamage(UUID turnId) {
         Turn existingTurn = findTurnByIdOrThrowError(turnId);
         processTurnDamage(existingTurn);
+        saveOrThrowException(existingTurn);
+        return prepareDamageCalculationResponse(existingTurn);
+    }
 
-        return mapper.toResponse(saveTurn(existingTurn));
+    private DamageCalculationResponse prepareDamageCalculationResponse(Turn existingTurn) {
+        TurnResponse newTurn = createAnotherTurnIfWinnerIsNull(existingTurn);
+        TurnResponse oldTurn = mapper.toResponse(existingTurn);
+        return new DamageCalculationResponse(oldTurn, newTurn, winner);
+    }
+
+    private TurnResponse createAnotherTurnIfWinnerIsNull(Turn existingTurn) {
+        if (winner == null) {
+            Battle battle = existingTurn.getBattle();
+            Turn newTurn = createByBattle(battle);
+            return mapper.toResponse(newTurn);
+        }
+        return null;
     }
 
     private void validateTurnCreation(Battle battle) {
@@ -71,11 +104,6 @@ public class TurnService {
 
     private Turn initializeTurn(Battle battle) {
         return mapper.toEntity(battle, STARTED);
-    }
-
-    private Turn saveTurn(Turn turn) {
-        saveOrThrowException(turn);
-        return turn;
     }
 
     private Character getActingCharacter(Turn turn, UUID characterId) {
@@ -138,13 +166,13 @@ public class TurnService {
         Character attacker = turn.getAttacker();
         Character defender = turn.getDefender();
 
-        int damageValue = calculateDamage(attacker);
+        int damageValue = calculateDamageWithRollDice(attacker);
         applyDamage(defender, damageValue);
 
         updateTurnDamageAndWinner(turn, damageValue, defender);
     }
 
-    private int calculateDamage(Character attacker) {
+    private int calculateDamageWithRollDice(Character attacker) {
         return rollDice(attacker.getNumDice(), attacker.getFaces()) + attacker.getStrength();
     }
 
@@ -157,9 +185,14 @@ public class TurnService {
         turn.setDamage(damageValue);
 
         if (isDefenderDefeated(defender)) {
-            turn.getBattle().setWinner(turn.getAttacker().getName());
-            publisher.processHistoryBattle(turn.getBattle());
+            winner = turn.getAttacker().getName();
+            processWinnerBattle(turn.getBattle());
         }
+    }
+
+    private void processWinnerBattle(Battle battle) {
+        battle.setWinner(winner);
+        publisher.processHistoryBattle(battle);
     }
 
     private boolean isDefenderDefeated(Character defender) {
@@ -181,7 +214,6 @@ public class TurnService {
             throw new BadRequestException(TURN_ALREADY_FINISHED);
         }
     }
-
 
     private Turn findTurnByIdOrThrowError(UUID id) {
         LOGGER.info("Find turn by ID: {}", id);
