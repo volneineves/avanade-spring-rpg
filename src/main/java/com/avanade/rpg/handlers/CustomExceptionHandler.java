@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -61,6 +62,11 @@ public class CustomExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<StandardErrorResponse> handleUnreadableMessage(HttpMessageNotReadableException ex) {
+        return buildErrorResponse(ex, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(HttpMessageNotWritableException.class)
+    public ResponseEntity<StandardErrorResponse> handleUnreadableMessage(HttpMessageNotWritableException ex) {
         return buildErrorResponse(ex, HttpStatus.BAD_REQUEST);
     }
 
