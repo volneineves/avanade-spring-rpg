@@ -28,6 +28,7 @@ public class ErrorMessages {
     public static final String CHARACTER_IS_IN_ANOTHER_BATTLE = "Character is fighting in another battle. Please, choose another one, or wait for the finishing: ";
     public static final String DEFENSER_ALREADY_CHOOSE = "Defense already choose. Please, try as attacker";
     public static final String ATTACKER_ALREADY_CHOOSE = "Attacker already choose. Please, try as defender";
+    public static final String BAD_OPPONENT_ORDER = "Character initiative must to start the current turn before his opponent";
 
 
 }

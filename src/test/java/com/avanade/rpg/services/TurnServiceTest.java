@@ -14,7 +14,6 @@ import com.avanade.rpg.factories.Action;
 import com.avanade.rpg.factories.ActionFactory;
 import com.avanade.rpg.mappers.TurnMapper;
 import com.avanade.rpg.payloads.requests.ActionTurnRequest;
-import com.avanade.rpg.payloads.requests.CreateTurnRequest;
 import com.avanade.rpg.payloads.responses.TurnResponse;
 import com.avanade.rpg.repositories.TurnRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -59,7 +58,6 @@ class TurnServiceTest {
     private UUID monsterId;
     private UUID battleId;
     private ActionTurnRequest actionTurnRequest;
-    private CreateTurnRequest createTurnRequest;
     private Turn turn;
     private Action action;
     private Battle battle;
@@ -74,7 +72,6 @@ class TurnServiceTest {
         battleId = UUID.randomUUID();
 
         actionTurnRequest = new ActionTurnRequest(turnId, monsterId, ActionType.ATTACK);
-        createTurnRequest = new CreateTurnRequest(battleId);
 
         hero = mock(Character.class);
         monster = mock(Character.class);
@@ -91,14 +88,12 @@ class TurnServiceTest {
     @Test
     @DisplayName("Should create a new turn")
     void shouldCreateNewTurn() {
-        when(battleService.findBattleByIdOrThrowError(battleId)).thenReturn(battle);
         when(mapper.toEntity(battle, TurnStatus.STARTED)).thenReturn(turn);
-        when(mapper.toResponse(turn)).thenReturn(turnResponse);
 
-        TurnResponse response = service.create(createTurnRequest);
+        Turn turn = service.createByBattle(battle);
 
-        assertNotNull(response);
-        verify(publisher).processHistoryTurn(turn);
+        assertNotNull(turn);
+        verify(publisher).processHistoryTurn(this.turn);
     }
 
     @Test
@@ -108,6 +103,7 @@ class TurnServiceTest {
         when(turn.getBattle()).thenReturn(battle);
         when(turn.getBattle().getInitiative()).thenReturn(monster);
         when(turn.getBattle().getInitiative().getId()).thenReturn(monsterId);
+        when(turn.getStatus()).thenReturn(TurnStatus.STARTED);
 
         when(actionFactory.createAction(ActionType.ATTACK)).thenReturn(action);
         when(mapper.toResponse(turn)).thenReturn(turnResponse);
@@ -128,6 +124,7 @@ class TurnServiceTest {
         when(turn.getBattle().getOpponent()).thenReturn(monster);
         when(turn.getBattle().getOpponent().getId()).thenReturn(monsterId);
         when(turn.getDefender()).thenReturn(hero);
+        when(turn.getStatus()).thenReturn(TurnStatus.RUNNING);
 
         when(actionFactory.createAction(ActionType.ATTACK)).thenReturn(action);
         when(mapper.toResponse(turn)).thenReturn(turnResponse);
@@ -143,10 +140,10 @@ class TurnServiceTest {
     @DisplayName("Should throw BadRequestException when try to update with Iin")
     void shouldThrowBadRequestExceptionWhenTryToUpdateWithInvalidCharacter() {
         when(repository.findById(turnId)).thenReturn(Optional.of(turn));
+        when(turn.getStatus()).thenReturn(TurnStatus.RUNNING);
         when(turn.getBattle()).thenReturn(battle);
         when(turn.getBattle().getInitiative()).thenReturn(hero);
         when(turn.getBattle().getOpponent()).thenReturn(monster);
-        when(turn.getAttacker()).thenReturn(hero);
 
         assertThrows(BadRequestException.class, () -> service.updateByAction(actionTurnRequest));
     }
@@ -199,10 +196,10 @@ class TurnServiceTest {
     @DisplayName("Should throw BadRequestException if character without initiative starts the turn")
     void shouldThrowBadRequestExceptionForInvalidInitiative() {
         when(repository.findById(turnId)).thenReturn(Optional.of(turn));
+        when(turn.getStatus()).thenReturn(TurnStatus.STARTED);
         when(turn.getBattle()).thenReturn(battle);
-        when(turn.getAttacker()).thenReturn(hero);
-        when(turn.getDefender()).thenReturn(monster);
-        when(battle.getInitiative()).thenReturn(mock(Character.class));
+        when(turn.getBattle().getOpponent()).thenReturn(monster);
+        when(battle.getInitiative()).thenReturn(hero);
 
         assertThrows(BadRequestException.class, () -> service.updateByAction(actionTurnRequest));
     }
@@ -219,12 +216,11 @@ class TurnServiceTest {
     @Test
     @DisplayName("Should throw ConstraintViolationException when DataIntegrityViolationException is thrown")
     void shouldThrowConstraintViolationException() {
-        when(battleService.findBattleByIdOrThrowError(battleId)).thenReturn(battle);
         when(mapper.toEntity(battle, TurnStatus.STARTED)).thenReturn(turn);
 
         doThrow(DataIntegrityViolationException.class).when(repository).save(turn);
 
-        assertThrows(ConstraintViolationException.class, () -> service.create(createTurnRequest));
+        assertThrows(ConstraintViolationException.class, () -> service.createByBattle(battle));
     }
 
     @Test
@@ -235,6 +231,6 @@ class TurnServiceTest {
 
         doThrow(RuntimeException.class).when(repository).save(turn);
 
-        assertThrows(UnknownViolationException.class, () -> service.create(createTurnRequest));
+        assertThrows(UnknownViolationException.class, () -> service.createByBattle(battle));
     }
 }
