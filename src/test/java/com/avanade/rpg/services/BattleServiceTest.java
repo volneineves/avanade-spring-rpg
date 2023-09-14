@@ -4,6 +4,7 @@ import com.avanade.rpg.amqp.HistoryPublisher;
 import com.avanade.rpg.entities.Battle;
 import com.avanade.rpg.entities.Character;
 import com.avanade.rpg.enums.CharacterType;
+import com.avanade.rpg.enums.DiceFaces;
 import com.avanade.rpg.exceptions.BadRequestException;
 import com.avanade.rpg.exceptions.ConstraintViolationException;
 import com.avanade.rpg.exceptions.ResourceNotFoundException;
@@ -71,9 +72,11 @@ class BattleServiceTest {
 
         hero = new Character();
         hero.setType(CharacterType.HERO);
+        hero.setHealth((short) 10);
 
         monster = new Character();
         monster.setType(CharacterType.MONSTER);
+        monster.setHealth((short) 10);
 
         battle = new Battle();
         response = mock(BattleResponse.class);
@@ -150,8 +153,25 @@ class BattleServiceTest {
     void shouldThrowBadRequestExceptionForInvalidCharacter() {
         hero.setType(HERO);
         monster.setType(HERO);
+        monster.setId(monsterId);
+        monster.setFaces(DiceFaces.D6);
 
-        when(characterService.findCharacterByIdOrThrowError(heroId)).thenReturn(hero);
+        when(characterService.findCharacterByIdOrThrowError(monsterId)).thenReturn(monster);
+
+        assertNotNull(hero);
+        assertNotNull(monster);
+        assertNotNull(request);
+        assertNotNull(monster.getType());
+        assertNotNull(monster.getHealth());
+
+        assertThrows(BadRequestException.class, () -> service.create(request));
+    }
+
+    @Test
+    @DisplayName("Should throw BadRequestException if character does not have health")
+    void shouldThrowBadRequestExceptionForUnHealthCharacter() {
+        monster.setHealth((short) 0);
+
         when(characterService.findCharacterByIdOrThrowError(monsterId)).thenReturn(monster);
 
         assertThrows(BadRequestException.class, () -> service.create(request));

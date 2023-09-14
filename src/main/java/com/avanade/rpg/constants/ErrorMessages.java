@@ -24,6 +24,7 @@ public class ErrorMessages {
     public static final String CHARACTER_IS_DIFFERENT= "Character is different than expected type: ";
     public static final String TURN_ALREADY_FINISHED = "Turn already finished";
     public static final String INVALID_CHARACTER_ID = "Invalid character ID for the current battle";
+    public static final String CHARACTER_IS_DEAD = "Character does not have health enough for starting a battle. Please, update it before try again: ";
 
 
 }

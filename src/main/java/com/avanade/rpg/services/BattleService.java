@@ -20,8 +20,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
 
-import static com.avanade.rpg.constants.ErrorMessages.BATTLE_NOT_FOUND;
-import static com.avanade.rpg.constants.ErrorMessages.CHARACTER_IS_DIFFERENT;
+import static com.avanade.rpg.constants.ErrorMessages.*;
 import static com.avanade.rpg.enums.CharacterType.HERO;
 import static com.avanade.rpg.enums.CharacterType.MONSTER;
 import static com.avanade.rpg.enums.DiceFaces.D20;
@@ -54,8 +53,8 @@ public class BattleService {
     }
 
     public BattleResponse create(BattleRequest request) {
-        Character monster = characterService.findCharacterByIdOrThrowError(request.monsterId());
-        Character hero = characterService.findCharacterByIdOrThrowError(request.heroId());
+        Character monster = getCharacterValid(request.monsterId());
+        Character hero = getCharacterValid(request.heroId());
 
         Battle battle = prepareNewBattleByHeroAndMonster(hero, monster);
 
@@ -88,6 +87,18 @@ public class BattleService {
         int heroInitiative = rollDice(D20);
         int monsterInitiative = rollDice(D20);
         return heroInitiative > monsterInitiative ? hero : monster;
+    }
+
+    private Character getCharacterValid(UUID characterId) {
+        Character character = characterService.findCharacterByIdOrThrowError(characterId);
+        ensureCharacterIsAlive(character);
+        return character;
+    }
+
+    private void ensureCharacterIsAlive(Character character) {
+        if (character == null || character.getHealth() <= 0) {
+            throw new BadRequestException(CHARACTER_IS_DEAD + (character != null ? character.getId() : "null"));
+        }
     }
 
     public Battle findBattleByIdOrThrowError(UUID id) {

@@ -22,19 +22,19 @@ public class Character {
     private CharacterType type;
 
     @Column(nullable = false)
-    private short health;
+    private Short health;
 
     @Column(nullable = false)
-    private short strength;
+    private Short strength;
 
     @Column(nullable = false)
-    private short defense;
+    private Short defense;
 
     @Column(nullable = false)
-    private short agility;
+    private Short agility;
 
     @Column(nullable = false)
-    private short numDice;
+    private Short numDice;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -64,43 +64,43 @@ public class Character {
         this.type = type;
     }
 
-    public short getHealth() {
+    public Short getHealth() {
         return health;
     }
 
-    public void setHealth(short health) {
+    public void setHealth(Short health) {
         this.health = health;
     }
 
-    public short getStrength() {
+    public Short getStrength() {
         return strength;
     }
 
-    public void setStrength(short strength) {
+    public void setStrength(Short strength) {
         this.strength = strength;
     }
 
-    public short getDefense() {
+    public Short getDefense() {
         return defense;
     }
 
-    public void setDefense(short defense) {
+    public void setDefense(Short defense) {
         this.defense = defense;
     }
 
-    public short getAgility() {
+    public Short getAgility() {
         return agility;
     }
 
-    public void setAgility(short agility) {
+    public void setAgility(Short agility) {
         this.agility = agility;
     }
 
-    public short getNumDice() {
+    public Short getNumDice() {
         return numDice;
     }
 
-    public void setNumDice(short numDice) {
+    public void setNumDice(Short numDice) {
         this.numDice = numDice;
     }
 
