@@ -5,6 +5,7 @@ import com.avanade.rpg.payloads.requests.CreateTurnRequest;
 import com.avanade.rpg.payloads.requests.UpdateTurnRequest;
 import com.avanade.rpg.payloads.responses.TurnResponse;
 import com.avanade.rpg.services.TurnService;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -43,6 +44,7 @@ public class TurnController {
         return ResponseEntity.status(200).body(turn);
     }
 
+    @CacheEvict(value = "characters", allEntries = true)
     @PatchMapping("/{id}/calculate-damage")
     public ResponseEntity<TurnResponse> calculateDamage(@PathVariable UUID id) {
         TurnResponse updatedTurn = turnService.calculateDamage(id);
