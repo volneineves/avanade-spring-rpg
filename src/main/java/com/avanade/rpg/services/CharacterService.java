@@ -1,10 +1,7 @@
 package com.avanade.rpg.services;
 
 import com.avanade.rpg.entities.Character;
-import com.avanade.rpg.exceptions.ConstraintViolationException;
-import com.avanade.rpg.exceptions.ResourceAlreadyExistsException;
-import com.avanade.rpg.exceptions.ResourceNotFoundException;
-import com.avanade.rpg.exceptions.UnknownViolationException;
+import com.avanade.rpg.exceptions.*;
 import com.avanade.rpg.mappers.CharacterMapper;
 import com.avanade.rpg.payloads.requests.CharacterRequest;
 import com.avanade.rpg.payloads.responses.CharacterResponse;
@@ -18,8 +15,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
-import static com.avanade.rpg.constants.ErrorMessages.CHARACTER_ALREADY_EXISTS;
-import static com.avanade.rpg.constants.ErrorMessages.CHARACTER_NOT_FOUND;
+import static com.avanade.rpg.constants.ErrorMessages.*;
 
 @Service
 public class CharacterService {
@@ -60,6 +56,7 @@ public class CharacterService {
 
     public void delete(UUID id) {
         ensureCharacterExistsById(id);
+        ensureCharacterIsntABattle(id);
         deleteByIdOrThrowException(id);
     }
 
@@ -90,6 +87,15 @@ public class CharacterService {
             throw new ResourceNotFoundException(CHARACTER_NOT_FOUND + id);
         }
     }
+
+    private void ensureCharacterIsntABattle(UUID id) {
+        LOGGER.info("Validating existence of character in a Battle with ID: {}", id);
+        boolean isCharacterInBattle = repository.isCharacterInBattle(id);
+        if (isCharacterInBattle) {
+            throw new BadRequestException(CHARACTER_IS_IN_A_BATTLE + id);
+        }
+    }
+
 
     private void saveOrThrowException(Character character) {
         handleExceptions(() -> repository.save(character));

@@ -15,6 +15,7 @@ public class ErrorMessages {
     public static final String TYPE_CANNOT_BE_NULL = "Field cannot be null: type";
     public static final String TYPE_MUST_BE_VALID = "Field type must ve valid: MONSTER | HERO";
     public static final String CHARACTER_NOT_FOUND = "Character not found: ";
+    public static final String CHARACTER_IS_IN_A_BATTLE = "Character could not be deleted because it's is on a battle: ";
     public static final String CHARACTER_ALREADY_EXISTS = "Character already exist: ";
     public static final String HERO_ID_CANNOT_BE_NULL = "Field cannot be null: heroId";
     public static final String MONSTER_ID_CANNOT_BE_NULL = "Field cannot be null: monsterId";

@@ -2,10 +2,7 @@ package com.avanade.rpg.services;
 
 import com.avanade.rpg.entities.Character;
 import com.avanade.rpg.enums.CharacterType;
-import com.avanade.rpg.exceptions.ConstraintViolationException;
-import com.avanade.rpg.exceptions.ResourceAlreadyExistsException;
-import com.avanade.rpg.exceptions.ResourceNotFoundException;
-import com.avanade.rpg.exceptions.UnknownViolationException;
+import com.avanade.rpg.exceptions.*;
 import com.avanade.rpg.mappers.CharacterMapper;
 import com.avanade.rpg.payloads.requests.CharacterRequest;
 import com.avanade.rpg.payloads.responses.CharacterResponse;
@@ -248,6 +245,16 @@ class CharacterServiceTest {
         service.delete(id);
 
         verify(repository).deleteById(id);
+    }
+
+    @Test
+    @DisplayName("Should not delete character by ID if it's in a Battle")
+    void shouldNotDeleteCharacterByIdIfItsInABattle() {
+        UUID id = UUID.randomUUID();
+        when(repository.existsById(id)).thenReturn(true);
+        when(repository.isCharacterInBattle(id)).thenReturn(true);
+
+        assertThrows(BadRequestException.class, () -> service.delete(id));
     }
 
     @Test
