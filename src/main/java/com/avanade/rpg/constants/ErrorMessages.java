@@ -26,6 +26,8 @@ public class ErrorMessages {
     public static final String INVALID_CHARACTER_ID = "Invalid character ID for the current battle";
     public static final String CHARACTER_IS_DEAD = "Character does not have health enough for starting a battle. Please, update it before try again: ";
     public static final String CHARACTER_IS_IN_ANOTHER_BATTLE = "Character is fighting in another battle. Please, choose another one, or wait for the finishing: ";
+    public static final String DEFENSER_ALREADY_CHOOSE = "Defense already choose. Please, try as attacker";
+    public static final String ATTACKER_ALREADY_CHOOSE = "Attacker already choose. Please, try as defender";
 
 
 }
