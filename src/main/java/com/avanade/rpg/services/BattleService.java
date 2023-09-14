@@ -1,5 +1,6 @@
 package com.avanade.rpg.services;
 
+import com.avanade.rpg.amqp.HistoryPublisher;
 import com.avanade.rpg.entities.Battle;
 import com.avanade.rpg.entities.Character;
 import com.avanade.rpg.enums.CharacterType;
@@ -19,8 +20,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.UUID;
 
-import static com.avanade.rpg.constants.ErrorMessages.BATTLE_NOT_FOUND;
-import static com.avanade.rpg.constants.ErrorMessages.CHARACTER_IS_DIFFERENT;
+import static com.avanade.rpg.constants.ErrorMessages.*;
 import static com.avanade.rpg.enums.CharacterType.HERO;
 import static com.avanade.rpg.enums.CharacterType.MONSTER;
 import static com.avanade.rpg.enums.DiceFaces.D20;
@@ -33,11 +33,13 @@ public class BattleService {
     private final BattleRepository repository;
     private final BattleMapper mapper;
     private final CharacterService characterService;
+    private final HistoryPublisher publisher;
 
-    public BattleService(BattleRepository repository, BattleMapper mapper, CharacterService characterService) {
+    public BattleService(BattleRepository repository, BattleMapper mapper, CharacterService characterService, HistoryPublisher publisher) {
         this.repository = repository;
         this.mapper = mapper;
         this.characterService = characterService;
+        this.publisher = publisher;
     }
 
     public List<BattleResponse> getAll() {
@@ -51,8 +53,8 @@ public class BattleService {
     }
 
     public BattleResponse create(BattleRequest request) {
-        Character monster = characterService.findCharacterByIdOrThrowError(request.monsterId());
-        Character hero = characterService.findCharacterByIdOrThrowError(request.heroId());
+        Character monster = getCharacterValid(request.monsterId());
+        Character hero = getCharacterValid(request.heroId());
 
         Battle battle = prepareNewBattleByHeroAndMonster(hero, monster);
 
@@ -87,6 +89,26 @@ public class BattleService {
         return heroInitiative > monsterInitiative ? hero : monster;
     }
 
+    private Character getCharacterValid(UUID characterId) {
+        Character character = characterService.findCharacterByIdOrThrowError(characterId);
+        ensureCharacterIsAlive(character);
+        ensureCharacterIsOutOfAnotherBattlesRunning(characterId);
+        return character;
+    }
+
+    private void ensureCharacterIsOutOfAnotherBattlesRunning(UUID characterId) {
+        boolean existsOngoingBattleWithCharacter = repository.existsOngoingBattleWithCharacter(characterId);
+        if (existsOngoingBattleWithCharacter) {
+            throw new BadRequestException(CHARACTER_IS_IN_ANOTHER_BATTLE + characterId);
+        }
+    }
+
+    private void ensureCharacterIsAlive(Character character) {
+        if (character == null || character.getHealth() <= 0) {
+            throw new BadRequestException(CHARACTER_IS_DEAD + (character != null ? character.getId() : "null"));
+        }
+    }
+
     public Battle findBattleByIdOrThrowError(UUID id) {
         LOGGER.info("Find battle by ID: {}", id);
         return repository.findById(id).orElseThrow(() -> new ResourceNotFoundException(BATTLE_NOT_FOUND + id));
@@ -96,6 +118,7 @@ public class BattleService {
         try {
             repository.save(battle);
             LOGGER.info("Successfully saved battle with ID: {}", battle.getId());
+            publisher.processHistoryBattle(battle);
         } catch (DataIntegrityViolationException e) {
             throw new ConstraintViolationException(e.getMessage());
         } catch (Exception e) {

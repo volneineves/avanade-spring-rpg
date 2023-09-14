@@ -1,8 +1,10 @@
 package com.avanade.rpg.services;
 
+import com.avanade.rpg.amqp.HistoryPublisher;
 import com.avanade.rpg.entities.Battle;
 import com.avanade.rpg.entities.Character;
 import com.avanade.rpg.enums.CharacterType;
+import com.avanade.rpg.enums.DiceFaces;
 import com.avanade.rpg.exceptions.BadRequestException;
 import com.avanade.rpg.exceptions.ConstraintViolationException;
 import com.avanade.rpg.exceptions.ResourceNotFoundException;
@@ -43,6 +45,10 @@ class BattleServiceTest {
     @Mock
     private CharacterService characterService;
 
+    @Mock
+    private HistoryPublisher publisher;
+
+
     @InjectMocks
     private BattleService service;
 
@@ -66,9 +72,11 @@ class BattleServiceTest {
 
         hero = new Character();
         hero.setType(CharacterType.HERO);
+        hero.setHealth((short) 10);
 
         monster = new Character();
         monster.setType(CharacterType.MONSTER);
+        monster.setHealth((short) 10);
 
         battle = new Battle();
         response = mock(BattleResponse.class);
@@ -97,6 +105,7 @@ class BattleServiceTest {
 
         verify(characterService, times(1)).findCharacterByIdOrThrowError(heroId);
         verify(characterService, times(1)).findCharacterByIdOrThrowError(monsterId);
+        verify(publisher).processHistoryBattle(battle);
     }
 
     @Test
@@ -142,14 +151,35 @@ class BattleServiceTest {
     @Test
     @DisplayName("Should throw BadRequestException if character type is not of type Character")
     void shouldThrowBadRequestExceptionForInvalidCharacter() {
-        hero.setType(HERO);
         monster.setType(HERO);
+        hero.setType(HERO);
 
+        when(characterService.findCharacterByIdOrThrowError(monsterId)).thenReturn(monster);
         when(characterService.findCharacterByIdOrThrowError(heroId)).thenReturn(hero);
+        when(repository.existsOngoingBattleWithCharacter(monsterId)).thenReturn(false);
+
+        assertThrows(BadRequestException.class, () -> service.create(request));
+    }
+
+    @Test
+    @DisplayName("Should throw BadRequestException if character does not have health")
+    void shouldThrowBadRequestExceptionForUnHealthCharacter() {
+        monster.setHealth((short) 0);
+
         when(characterService.findCharacterByIdOrThrowError(monsterId)).thenReturn(monster);
 
         assertThrows(BadRequestException.class, () -> service.create(request));
     }
+
+    @Test
+    @DisplayName("Should throw BadRequestException if character is in another open Battle")
+    void shouldThrowBadRequestExceptionForCharacterIfItsInAnotherOpenBattle() {
+        when(characterService.findCharacterByIdOrThrowError(monsterId)).thenReturn(monster);
+        when(repository.existsOngoingBattleWithCharacter(monsterId)).thenReturn(true);
+
+        assertThrows(BadRequestException.class, () -> service.create(request));
+    }
+
 
     @Test
     @DisplayName("Should throw ConstraintViolationException when DataIntegrityViolationException is caught")

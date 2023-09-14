@@ -1,5 +1,6 @@
 package com.avanade.rpg.services;
 
+import com.avanade.rpg.amqp.HistoryPublisher;
 import com.avanade.rpg.entities.Battle;
 import com.avanade.rpg.entities.Character;
 import com.avanade.rpg.entities.Turn;
@@ -36,12 +37,14 @@ public class TurnService {
     private final TurnMapper mapper;
     private final BattleService battleService;
     private final ActionFactory actionFactory;
+    private final HistoryPublisher publisher;
 
-    public TurnService(TurnRepository repository, TurnMapper mapper, BattleService battleService, ActionFactory actionFactory) {
+    public TurnService(TurnRepository repository, TurnMapper mapper, BattleService battleService, ActionFactory actionFactory, HistoryPublisher publisher) {
         this.repository = repository;
         this.mapper = mapper;
         this.battleService = battleService;
         this.actionFactory = actionFactory;
+        this.publisher = publisher;
     }
 
     public TurnResponse create(CreateTurnRequest request) {
@@ -105,6 +108,7 @@ public class TurnService {
 
         if (isDefenderDefeated(defender)) {
             turn.getBattle().setWinner(turn.getAttacker().getName());
+            publisher.processHistoryBattle(turn.getBattle());
         }
     }
 
@@ -158,6 +162,7 @@ public class TurnService {
         try {
             repository.save(turn);
             LOGGER.info("Successfully saved turn with ID: {}", turn.getId());
+            publisher.processHistoryTurn(turn);
         } catch (DataIntegrityViolationException e) {
             throw new ConstraintViolationException(e.getMessage());
         } catch (Exception e) {

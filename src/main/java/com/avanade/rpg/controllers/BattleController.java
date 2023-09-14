@@ -32,8 +32,8 @@ public class BattleController {
         return ResponseEntity.ok(battle);
     }
 
-    @PostMapping("/start")
-    public ResponseEntity<BattleResponse> startBattle(@RequestBody @Valid BattleRequest request) {
+    @PostMapping
+    public ResponseEntity<BattleResponse> create(@RequestBody @Valid BattleRequest request) {
         BattleResponse battle = battleService.create(request);
         return ResponseEntity.status(201).body(battle);
     }
