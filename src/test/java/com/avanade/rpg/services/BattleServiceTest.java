@@ -151,18 +151,12 @@ class BattleServiceTest {
     @Test
     @DisplayName("Should throw BadRequestException if character type is not of type Character")
     void shouldThrowBadRequestExceptionForInvalidCharacter() {
-        hero.setType(HERO);
         monster.setType(HERO);
-        monster.setId(monsterId);
-        monster.setFaces(DiceFaces.D6);
+        hero.setType(HERO);
 
         when(characterService.findCharacterByIdOrThrowError(monsterId)).thenReturn(monster);
-
-        assertNotNull(hero);
-        assertNotNull(monster);
-        assertNotNull(request);
-        assertNotNull(monster.getType());
-        assertNotNull(monster.getHealth());
+        when(characterService.findCharacterByIdOrThrowError(heroId)).thenReturn(hero);
+        when(repository.existsOngoingBattleWithCharacter(monsterId)).thenReturn(false);
 
         assertThrows(BadRequestException.class, () -> service.create(request));
     }
@@ -176,6 +170,16 @@ class BattleServiceTest {
 
         assertThrows(BadRequestException.class, () -> service.create(request));
     }
+
+    @Test
+    @DisplayName("Should throw BadRequestException if character is in another open Battle")
+    void shouldThrowBadRequestExceptionForCharacterIfItsInAnotherOpenBattle() {
+        when(characterService.findCharacterByIdOrThrowError(monsterId)).thenReturn(monster);
+        when(repository.existsOngoingBattleWithCharacter(monsterId)).thenReturn(true);
+
+        assertThrows(BadRequestException.class, () -> service.create(request));
+    }
+
 
     @Test
     @DisplayName("Should throw ConstraintViolationException when DataIntegrityViolationException is caught")

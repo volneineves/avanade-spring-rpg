@@ -92,7 +92,15 @@ public class BattleService {
     private Character getCharacterValid(UUID characterId) {
         Character character = characterService.findCharacterByIdOrThrowError(characterId);
         ensureCharacterIsAlive(character);
+        ensureCharacterIsOutOfAnotherBattlesRunning(characterId);
         return character;
+    }
+
+    private void ensureCharacterIsOutOfAnotherBattlesRunning(UUID characterId) {
+        boolean existsOngoingBattleWithCharacter = repository.existsOngoingBattleWithCharacter(characterId);
+        if (existsOngoingBattleWithCharacter) {
+            throw new BadRequestException(CHARACTER_IS_IN_ANOTHER_BATTLE + characterId);
+        }
     }
 
     private void ensureCharacterIsAlive(Character character) {
