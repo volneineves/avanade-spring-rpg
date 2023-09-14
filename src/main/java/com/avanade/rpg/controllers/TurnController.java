@@ -1,7 +1,6 @@
 package com.avanade.rpg.controllers;
 
 import com.avanade.rpg.payloads.requests.ActionTurnRequest;
-import com.avanade.rpg.payloads.requests.CreateTurnRequest;
 import com.avanade.rpg.payloads.requests.UpdateTurnRequest;
 import com.avanade.rpg.payloads.responses.TurnResponse;
 import com.avanade.rpg.services.TurnService;
@@ -22,12 +21,6 @@ public class TurnController {
 
     public TurnController(TurnService turnService) {
         this.turnService = turnService;
-    }
-
-    @PostMapping
-    public ResponseEntity<TurnResponse> create(@RequestBody CreateTurnRequest request) {
-        TurnResponse turn = turnService.create(request);
-        return ResponseEntity.status(201).body(turn);
     }
 
     @PatchMapping("/{id}/attack")

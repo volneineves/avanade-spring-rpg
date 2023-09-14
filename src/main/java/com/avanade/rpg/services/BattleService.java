@@ -3,6 +3,7 @@ package com.avanade.rpg.services;
 import com.avanade.rpg.amqp.HistoryPublisher;
 import com.avanade.rpg.entities.Battle;
 import com.avanade.rpg.entities.Character;
+import com.avanade.rpg.entities.Turn;
 import com.avanade.rpg.enums.CharacterType;
 import com.avanade.rpg.exceptions.BadRequestException;
 import com.avanade.rpg.exceptions.ConstraintViolationException;
@@ -16,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -33,80 +35,88 @@ public class BattleService {
     private final BattleRepository repository;
     private final BattleMapper mapper;
     private final CharacterService characterService;
+    private final TurnService turnService;
     private final HistoryPublisher publisher;
 
-    public BattleService(BattleRepository repository, BattleMapper mapper, CharacterService characterService, HistoryPublisher publisher) {
+    public BattleService(BattleRepository repository, BattleMapper mapper, CharacterService characterService, TurnService turnService, HistoryPublisher publisher) {
         this.repository = repository;
         this.mapper = mapper;
         this.characterService = characterService;
+        this.turnService = turnService;
         this.publisher = publisher;
     }
 
     public List<BattleResponse> getAll() {
-        List<Battle> battles = repository.findAll();
-        return battles.stream().map(mapper::toResponse).toList();
+        return repository.findAll().stream()
+                .map(mapper::toResponse)
+                .toList();
     }
 
     public BattleResponse getById(UUID id) {
-        Battle battle = findBattleByIdOrThrowError(id);
-        return mapper.toResponse(battle);
+        return mapper.toResponse(findBattleByIdOrThrowError(id));
     }
 
+    @Transactional
     public BattleResponse create(BattleRequest request) {
-        Character monster = getCharacterValid(request.monsterId());
-        Character hero = getCharacterValid(request.heroId());
+        Character monster = validateAndGetCharacter(request.monsterId());
+        Character hero = validateAndGetCharacter(request.heroId());
+        Battle newBattle = initializeAndSaveBattle(hero, monster);
 
-        Battle battle = prepareNewBattleByHeroAndMonster(hero, monster);
+        createAndAddTurnToBattle(newBattle);
 
-        saveOrThrowException(battle);
-        return mapper.toResponse(battle);
+        return mapper.toResponse(newBattle);
     }
 
-    private Battle prepareNewBattleByHeroAndMonster(Character hero, Character monster) {
-        validateCharacterType(hero, HERO);
-        validateCharacterType(monster, MONSTER);
-        Character initiativeCharacter = randomInitiativeCharacter(hero, monster);
-        Character opponentCharacter = getOpponentCharacter(initiativeCharacter, hero, monster);
-
-        return mapper.toEntity(initiativeCharacter, opponentCharacter);
-    }
-
-    private void validateCharacterType(Character character, CharacterType expectedType) {
-        boolean isNotCorrectType = !character.getType().equals(expectedType);
-
-        if (isNotCorrectType) {
-            throw new BadRequestException(CHARACTER_IS_DIFFERENT + expectedType);
-        }
-    }
-
-    private Character getOpponentCharacter(Character initiativeCharacter, Character hero, Character monster) {
-        return initiativeCharacter.equals(hero) ? monster : hero;
-    }
-
-    private Character randomInitiativeCharacter(Character hero, Character monster) {
-        int heroInitiative = rollDice(D20);
-        int monsterInitiative = rollDice(D20);
-        return heroInitiative > monsterInitiative ? hero : monster;
-    }
-
-    private Character getCharacterValid(UUID characterId) {
+    private Character validateAndGetCharacter(UUID characterId) {
         Character character = characterService.findCharacterByIdOrThrowError(characterId);
-        ensureCharacterIsAlive(character);
-        ensureCharacterIsOutOfAnotherBattlesRunning(characterId);
+        validateCharacterIsAlive(character);
+        ensureCharacterIsAvailableForBattle(characterId);
         return character;
     }
 
-    private void ensureCharacterIsOutOfAnotherBattlesRunning(UUID characterId) {
-        boolean existsOngoingBattleWithCharacter = repository.existsOngoingBattleWithCharacter(characterId);
-        if (existsOngoingBattleWithCharacter) {
+    private void ensureCharacterIsAvailableForBattle(UUID characterId) {
+        if (repository.existsOngoingBattleWithCharacter(characterId)) {
             throw new BadRequestException(CHARACTER_IS_IN_ANOTHER_BATTLE + characterId);
         }
     }
 
-    private void ensureCharacterIsAlive(Character character) {
-        if (character == null || character.getHealth() <= 0) {
-            throw new BadRequestException(CHARACTER_IS_DEAD + (character != null ? character.getId() : "null"));
+    private void validateCharacterIsAlive(Character character) {
+        if (character.getHealth() <= 0) {
+            throw new BadRequestException(CHARACTER_IS_DEAD + character.getId());
         }
+    }
+
+    private Battle initializeAndSaveBattle(Character hero, Character monster) {
+        Battle newBattle = prepareBattle(hero, monster);
+        saveOrThrowException(newBattle);
+        return newBattle;
+    }
+
+    private void createAndAddTurnToBattle(Battle newBattle) {
+        Turn turn = turnService.createByBattle(newBattle);
+        newBattle.addTurn(turn);
+    }
+
+    private Battle prepareBattle(Character hero, Character monster) {
+        validateCharacterType(hero, HERO);
+        validateCharacterType(monster, MONSTER);
+        return prepareNewBattleByInitiative(hero, monster);
+    }
+
+    private void validateCharacterType(Character character, CharacterType expectedType) {
+        if (!character.getType().equals(expectedType)) {
+            throw new BadRequestException(CHARACTER_IS_DIFFERENT + expectedType);
+        }
+    }
+
+    private Battle prepareNewBattleByInitiative(Character hero, Character monster) {
+        int heroInitiative = rollDice(D20);
+        int monsterInitiative = rollDice(D20);
+
+        Character initiator = heroInitiative > monsterInitiative ? hero : monster;
+        Character opponent = (initiator.equals(hero)) ? monster : hero;
+
+        return mapper.toEntity(initiator, opponent);
     }
 
     public Battle findBattleByIdOrThrowError(UUID id) {

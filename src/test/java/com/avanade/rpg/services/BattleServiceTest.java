@@ -4,7 +4,6 @@ import com.avanade.rpg.amqp.HistoryPublisher;
 import com.avanade.rpg.entities.Battle;
 import com.avanade.rpg.entities.Character;
 import com.avanade.rpg.enums.CharacterType;
-import com.avanade.rpg.enums.DiceFaces;
 import com.avanade.rpg.exceptions.BadRequestException;
 import com.avanade.rpg.exceptions.ConstraintViolationException;
 import com.avanade.rpg.exceptions.ResourceNotFoundException;
@@ -44,6 +43,9 @@ class BattleServiceTest {
 
     @Mock
     private CharacterService characterService;
+
+    @Mock
+    private TurnService turnService;
 
     @Mock
     private HistoryPublisher publisher;
@@ -106,6 +108,7 @@ class BattleServiceTest {
         verify(characterService, times(1)).findCharacterByIdOrThrowError(heroId);
         verify(characterService, times(1)).findCharacterByIdOrThrowError(monsterId);
         verify(publisher).processHistoryBattle(battle);
+        verify(turnService).createByBattle(battle);
     }
 
     @Test

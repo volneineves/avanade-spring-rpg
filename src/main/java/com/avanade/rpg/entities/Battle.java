@@ -59,6 +59,9 @@ public class Battle {
     public List<Turn> getTurns() {
         return turns;
     }
+    public void addTurn(Turn turn) {
+        turns.add(turn);
+    }
 
     public String getWinner() {
         return winner;
