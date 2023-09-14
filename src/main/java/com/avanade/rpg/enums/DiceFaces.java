@@ -1,5 +1,7 @@
 package com.avanade.rpg.enums;
 
+import com.avanade.rpg.exceptions.BadRequestException;
+
 public enum DiceFaces {
     D4((short) 4),
     D6((short) 6),
@@ -24,6 +26,6 @@ public enum DiceFaces {
                 return dice;
             }
         }
-        throw new IllegalArgumentException("No enum constant for faces: " + faces);
+        throw new BadRequestException("No enum constant for faces: " + faces);
     }
 }
