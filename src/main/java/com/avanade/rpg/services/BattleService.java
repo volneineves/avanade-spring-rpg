@@ -1,5 +1,6 @@
 package com.avanade.rpg.services;
 
+import com.avanade.rpg.amqp.HistoryPublisher;
 import com.avanade.rpg.entities.Battle;
 import com.avanade.rpg.entities.Character;
 import com.avanade.rpg.enums.CharacterType;
@@ -33,11 +34,13 @@ public class BattleService {
     private final BattleRepository repository;
     private final BattleMapper mapper;
     private final CharacterService characterService;
+    private final HistoryPublisher publisher;
 
-    public BattleService(BattleRepository repository, BattleMapper mapper, CharacterService characterService) {
+    public BattleService(BattleRepository repository, BattleMapper mapper, CharacterService characterService, HistoryPublisher publisher) {
         this.repository = repository;
         this.mapper = mapper;
         this.characterService = characterService;
+        this.publisher = publisher;
     }
 
     public List<BattleResponse> getAll() {
@@ -96,6 +99,7 @@ public class BattleService {
         try {
             repository.save(battle);
             LOGGER.info("Successfully saved battle with ID: {}", battle.getId());
+            publisher.processHistoryBattle(battle);
         } catch (DataIntegrityViolationException e) {
             throw new ConstraintViolationException(e.getMessage());
         } catch (Exception e) {

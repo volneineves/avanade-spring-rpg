@@ -27,15 +27,15 @@ public class Turn {
     @Column(nullable = false)
     private TurnStatus status;
 
-    @ManyToOne(cascade = CascadeType.PERSIST)
+    @ManyToOne(cascade = CascadeType.MERGE)
     @JoinColumn(name = "attacker_id")
     private Character attacker;
 
     @JoinColumn(name = "defender_id")
-    @ManyToOne(cascade = CascadeType.PERSIST)
+    @ManyToOne(cascade = CascadeType.MERGE)
     private Character defender;
 
-    @ManyToOne(cascade = CascadeType.PERSIST)
+    @ManyToOne(cascade = CascadeType.MERGE)
     @JsonBackReference
     private Battle battle;
 

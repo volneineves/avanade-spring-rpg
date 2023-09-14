@@ -21,7 +21,7 @@ public class ErrorMessages {
     public static final String MONSTER_ID_CANNOT_BE_NULL = "Field cannot be null: monsterId";
     public static final String BATTLE_NOT_FOUND = "Battle could not be found: ";
     public static final String TURN_NOT_FOUND = "Turn could not be found: ";
-    public static final String CHARACTER_IS_DIFFERENT= "Character is different than expected type: : ";
+    public static final String CHARACTER_IS_DIFFERENT= "Character is different than expected type: ";
     public static final String TURN_ALREADY_FINISHED = "Turn already finished";
     public static final String INVALID_CHARACTER_ID = "Invalid character ID for the current battle";
 

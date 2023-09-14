@@ -1,5 +1,6 @@
 package com.avanade.rpg.services;
 
+import com.avanade.rpg.amqp.HistoryPublisher;
 import com.avanade.rpg.entities.Battle;
 import com.avanade.rpg.entities.Character;
 import com.avanade.rpg.entities.Turn;
@@ -48,12 +49,14 @@ class TurnServiceTest {
     @Mock
     private ActionFactory actionFactory;
 
+    @Mock
+    private HistoryPublisher publisher;
+
     @InjectMocks
     private TurnService service;
 
     private UUID turnId;
     private UUID monsterId;
-    private UUID heroId;
     private UUID battleId;
     private ActionTurnRequest actionTurnRequest;
     private CreateTurnRequest createTurnRequest;
@@ -68,7 +71,6 @@ class TurnServiceTest {
     void setUp() {
         turnId = UUID.randomUUID();
         monsterId = UUID.randomUUID();
-        heroId = UUID.randomUUID();
         battleId = UUID.randomUUID();
 
         actionTurnRequest = new ActionTurnRequest(turnId, monsterId, ActionType.ATTACK);
@@ -96,6 +98,7 @@ class TurnServiceTest {
         TurnResponse response = service.create(createTurnRequest);
 
         assertNotNull(response);
+        verify(publisher).processHistoryTurn(turn);
     }
 
     @Test
@@ -180,6 +183,7 @@ class TurnServiceTest {
 
         verify(turn).setDamage(anyInt());
         assertEquals(TurnStatus.FINISHED, response.status());
+        verify(publisher).processHistoryBattle(battle);
     }
 
     @Test

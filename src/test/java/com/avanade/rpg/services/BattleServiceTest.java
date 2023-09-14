@@ -1,5 +1,6 @@
 package com.avanade.rpg.services;
 
+import com.avanade.rpg.amqp.HistoryPublisher;
 import com.avanade.rpg.entities.Battle;
 import com.avanade.rpg.entities.Character;
 import com.avanade.rpg.enums.CharacterType;
@@ -42,6 +43,10 @@ class BattleServiceTest {
 
     @Mock
     private CharacterService characterService;
+
+    @Mock
+    private HistoryPublisher publisher;
+
 
     @InjectMocks
     private BattleService service;
@@ -97,6 +102,7 @@ class BattleServiceTest {
 
         verify(characterService, times(1)).findCharacterByIdOrThrowError(heroId);
         verify(characterService, times(1)).findCharacterByIdOrThrowError(monsterId);
+        verify(publisher).processHistoryBattle(battle);
     }
 
     @Test
