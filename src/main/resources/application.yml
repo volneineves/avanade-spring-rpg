@@ -2,9 +2,9 @@ spring:
   profiles:
     active: dev
   application:
-    name: rpg
+    name: game
   rabbitmq:
-    host: localhost
-    port: 5672
+    host: ${RABBIT_URL:localhost}
+    port: ${RABBIT_PORT:5672}
     username: guest
     password: guest
