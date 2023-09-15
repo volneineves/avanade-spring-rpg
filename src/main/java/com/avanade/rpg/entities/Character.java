@@ -8,7 +8,7 @@ import java.util.UUID;
 
 
 @Entity
-@Table(name = "characters")
+@Table(name = "characters", schema = "game")
 public class Character {
 
     @Id

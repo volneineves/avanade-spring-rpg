@@ -8,7 +8,7 @@ import jakarta.persistence.*;
 import java.util.UUID;
 
 @Entity
-@Table(name = "turns")
+@Table(name = "turns", schema = "game")
 public class Turn {
 
     @Id
